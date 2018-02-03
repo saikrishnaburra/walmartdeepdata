@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Settings>
+  <Setting id="OutputDirectory">D:\data\walmart_scs_data</Setting>
+  <Setting id="Stores">4800</Setting>
+  <Setting id="IntlSuppliers">1</Setting>
+  <Setting id="DomSuppliers">1</Setting>
+  <Setting id="ItemRatio">0.75</Setting>
+  <Setting id="LDC1">12</Setting>
+  <Setting id="LDC2">80</Setting>
+  <Setting id="Suppliers">400</Setting>
+  <Setting id="SupCanSupply">2</Setting>
+  <Setting id="ItemCount">4</Setting>
+  <Setting id="StartDate">1/1/2017</Setting>
+  <Setting id="Years">1</Setting>
+  <Setting id="Slices">1</Setting>
+  <Setting id="Customers">1</Setting>
+  <Setting id="Transports">1</Setting>
+  <Setting id="Demands">1</Setting>
+  <Setting id="CommonItems">1</Setting>
+  <Setting id="WithKeys">1</Setting>
+</Settings>
