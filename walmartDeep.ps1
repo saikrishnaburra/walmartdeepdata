@@ -126,13 +126,16 @@ for($locind=0;$locind -lt ($DomSuppliers);$locind++)
     $Jobs += $job.ID;
   }
   Wait-Job -Id $Jobs;
-  <#
+  
    Write-Host "Writing Demand Quantity..."; 
 
   $FileNamePrefix = 'Fact.DemandQuantity'
   $sliceId = 0;
   $Jobs = @();
-  
+  $StartItemIntl=$FirstItemIntl;
+  $EndItemIntl=$LastItemIntl;
+  $StartItemDom=$FirstItemDom;
+  $EndItemDom=$LastItemDom;
   $EndItem=[math]::floor($ItemCount/$Slices);
   1..$Slices | ForEach-Object { $sliceId = 0; } {
     $jobName = "DemandQuantity-Slice-$($sliceId)";
@@ -142,7 +145,7 @@ for($locind=0;$locind -lt ($DomSuppliers);$locind++)
     $Jobs += $job.ID;
   }
   Wait-Job -Id $Jobs;
-  <#
+  
     Write-Host "Writing Activity Parameters..."; 
    
   $FileNamePrefix = 'Fact.ActivityParameters'
@@ -160,25 +163,24 @@ for($locind=0;$locind -lt ($DomSuppliers);$locind++)
     $Jobs += $job.ID;
   }
   Wait-Job -Id $Jobs;
-  
-  
+ 
   Write-Host "Writing CapacityAvailability..."; 
   $FileNamePrefix = 'Fact.CapacityAvailability'
   $sliceId = 0;
   $Jobs = @();
-  
-  $EndRes=[math]::floor($ResourceHash.Count/$Slices);
+  $StartItemIntl=$FirstItemIntl;
+  $EndItemIntl=$LastItemIntl;
+  $StartItemDom=$FirstItemDom;
+  $EndItemDom=$LastItemDom;
   1..$Slices | ForEach-Object { $sliceId = 0; } {
-    $jobName = "CapacityAvailability-Slice-$($sliceId)";
-	write-host $StartRes $EndRes;
-    $job = Start-Job -Name $jobName -ScriptBlock $generateCapacityAvailability -ArgumentList $OutputDirectory,$StartDate,$Years,$Version,$Resources,$FileNamePrefix,$sliceId,$LocationsArray,$IntlSuppliers,$DomSuppliers,$Stores,$ResourceHash,$LDC1,$LDC2,$LocationHash,$ResActHash,$FindActKeyHash;
+    $jobName = "FactCapacityAvailability-Slice-$($sliceId)";
+    $job = Start-Job -Name $jobName -ScriptBlock $generateCapacityAvailability -ArgumentList $OutputDirectory,$StartDate,$Years,$FileNamePrefix,$sliceId,$LocationsArray,$IntlSuppliers,$DomSuppliers,$Stores,$ResourceHash,$LDC1,$LDC2,$LocationHash,$ResActHash,$FindActKeyHash,$ActivityHash,$FindResKeyHash;
     $sliceId++;
-    
     $Jobs += $job.ID;
   }
   Wait-Job -Id $Jobs;
-  #>
-<#
+ 
+
   Write-Host "Writing MaterialProductionGraphPlannedWIP..."; 
   $FileNamePrefix = 'Fact.MaterialProductionGraphPlannedWIP'
   $sliceId = 0;
@@ -606,7 +608,7 @@ $generateStorageAvailability={
        $weekcnt=1;
 	   while($StartDate -lt $EndDate){
        
-                   for($StoreInd=0;$StoreInd -lt $LDC1;$StoreInd++){
+                   for($StoreInd=0;$StoreInd -lt $LDC1/2;$StoreInd++){
                      for($ItemInd=$StartItemIntl;$ItemInd -lt $EndItemIntl;$ItemInd++){
                      $Storage="DC-"+$LocationsArray[$Stores+$StoreInd];
                      $WeekKey=get-date $StartDate -Format "yyyy-MM-dd";
@@ -656,7 +658,7 @@ $generateStorageGraph={
                    }
 		   }
 				   for($ItemInd=$StartItemIntl;$ItemInd -lt $EndItemIntl;$ItemInd++){
-                   for($StoreInd=0;$StoreInd -lt $LDC1;$StoreInd++){
+                   for($StoreInd=0;$StoreInd -lt $LDC1/2;$StoreInd++){
                      $B1Storage=get-random -minimum 100 -maximum 10000;
                      $B2Storage=get-random -minimum 100 -maximum 10000;
                      $StorageAvail=get-random -minimum 100 -maximum 10000;
@@ -706,7 +708,7 @@ param($OutputDirectory,$StartDate,$Years,$ItemCount,$Version,$FileNamePrefix,$sl
           }
           
         }
-		for($LocInd=$Stores;$LocInd -lt ($Stores+$LDC1+$LDC2);$LocInd++)
+		for($LocInd=$Stores;$LocInd -lt ($Stores+$LDC1/2);$LocInd++)
        {
           for($ItemInd=$StartItemIntl;$ItemInd -lt $EndItemIntl;$ItemInd++)
           {
@@ -720,7 +722,48 @@ param($OutputDirectory,$StartDate,$Years,$ItemCount,$Version,$FileNamePrefix,$sl
           }
           
         }
-        
+        for($LocInd=$Stores+$LDC1;$LocInd -lt ($Stores+$LDC1+$LDC2);$LocInd++)
+       {
+          for($ItemInd=$StartItemIntl;$ItemInd -lt $EndItemIntl;$ItemInd++)
+          {
+
+                     $Inventory=get-random -minimum 100 -maximum 1000;
+					 $ILT=600;
+                     $SupplyChanged = get-random $bool;
+                     $WeekKey=get-date $StartDate -format "yyyy-MM-dd";
+                     $DFile.writeline($WeekKey+","+$LocInd+","+$ItemInd+",0,"+$ILT);
+                     
+          }
+          
+        }
+		for($LocInd=$Stores+$LDC1+$LDC2;$LocInd -lt ($Stores+$LDC1+$LDC2+$IntlSuppliers);$LocInd++)
+       {
+          for($ItemInd=$StartItemIntl;$ItemInd -lt $EndItemIntl;$ItemInd++)
+          {
+
+                     $Inventory=get-random -minimum 100 -maximum 1000;
+					 $ILT=600;
+                     $SupplyChanged = get-random $bool;
+                     $WeekKey=get-date $StartDate -format "yyyy-MM-dd";
+                     $DFile.writeline($WeekKey+","+$LocInd+","+$ItemInd+",0,"+$ILT);
+                     
+          }
+          
+        }
+		for($LocInd=$Stores+$LDC1;$LocInd -lt ($Stores+$LDC1+$LDC2+$DomSuppliers);$LocInd++)
+       {
+          for($ItemInd=$StartItemDom;$ItemInd -lt $EndItemDom;$ItemInd++)
+          {
+
+                     $Inventory=get-random -minimum 100 -maximum 1000;
+					 $ILT=600;
+                     $SupplyChanged = get-random $bool;
+                     $WeekKey=get-date $StartDate -format "yyyy-MM-dd";
+                     $DFile.writeline($WeekKey+","+$LocInd+","+$ItemInd+",0,"+$ILT);
+                     
+          }
+          
+        }
          $weekcnt++;
         $StartDate=$StartDate.AddDays(7);
 	}
@@ -798,7 +841,21 @@ $generateInventory={
           }
           
         }
-		for($LocInd=$Stores;$LocInd -lt ($Stores+$LDC1+$LDC2);$LocInd++)
+		for($LocInd=$Stores;$LocInd -lt ($Stores+$LDC1/2);$LocInd++)
+       {
+          for($ItemInd=$StartItemIntl;$ItemInd -lt $EndItemIntl;$ItemInd++)
+          {
+
+                     $Inventory=get-random -minimum 100 -maximum 1000;
+					 $ILT=600;
+                     $SupplyChanged = get-random $bool;
+                     $WeekKey=get-date $StartDate -format "yyyy-MM-dd";
+                     $DFile.writeline($WeekKey+","+$LocInd+","+$ItemInd+",0,"+$BOH+","+$ExpectedReceipts+",,");
+                     
+          }
+          
+        }
+		for($LocInd=$Stores+$LDC1;$LocInd -lt ($Stores+$LDC1+$LDC2);$LocInd++)
        {
           for($ItemInd=$StartItemIntl;$ItemInd -lt $EndItemIntl;$ItemInd++)
           {
@@ -987,42 +1044,54 @@ $generateMaterialProductionGraphPlannedWIP={
 }
 
 $generateCapacityAvailability={
-   param($OutputDirectory,$StartDate,$Years,$Version,$Resources,$FileNamePrefix,$sliceId,$LocationsArray,$IntlSuppliers,$DomSuppliers,$Stores,$ResourceHash,$LDC1,$LDC2,$LocationHash,$ResActHash,$FindActKeyHash);
-   $CapFile=[System.IO.StreamWriter] ("$OutputDirectory\$FileNamePrefix-$($sliceId).csv");
+   param($OutputDirectory,$StartDate,$Years,$FileNamePrefix,$sliceId,$LocationsArray,$IntlSuppliers,$DomSuppliers,$Stores,$ResourceHash,$LDC1,$LDC2,$LocationHash,$ResActHash,$FindActKeyHash,$ActivityHash,$FindResKeyHash);
+   $CapFile = [System.IO.StreamWriter] ("$OutputDirectory\$FileNamePrefix-$($sliceId).csv");
+   $CapFile.writeline("Time.[FiscalWeekKey],Location.[LocationKey],Version.[VersionKey],Resource.[ResourceKey],Capacity Availability,Capacity Changed,Overtime_1,Overtime_2");
+   
+   [DateTime]$StartDate=get-date $StartDate;
+   [DateTime]$EndDate=$StartDate.AddYears($Years);
 	$rand1=@(35000,45000);
 	$rand2=@(800000,1000000);
 	$rand3=@(15000,20000);
-	$CapFile.writeline("Time.[FiscalWeekKey],Location.[LocationKey],Version.[VersionKey],Resource.[ResourceKey],Capacity Availability,Capacity Changed,Overtime_1,Overtime_2");
-	[DateTime]$StartDate=get-date $StartDate;
-	[DateTime]$EndDate=$StartDate.AddYears($Years);
-	
-	  while($StartDate -lt $EndDate)
+    	
+	while($StartDate -lt $EndDate)
 	{
-        for($ResInd=0;$ResInd -lt $ResourceHash.count;$ResInd++)
-		{
-		
-		 $acty=$ResActHash.Get_Item($Res);
-			  
-			   $actind=$FindActKeyHash.Get_Item([string]$acty);
-		       $Location=$acty -split "-";
-		 $WeekKey=get-date $StartDate -Format "yyyy-MM-dd";
-		 $LocKey=[Int]$Location[2];
-		 if($LocKey -ge 6000 -and $LocKey -lt 7000)
+      
+      for($ResInd=0;$ResInd -lt $ResourceHash.count;$ResInd++)
+{
+            $Res=$ResourceHash.Get_Item([Int]$ResInd);
+			$values=$Res -split "-";
+			if($values.count -eq 3)
+			{
+			if($values[2] -eq "I" -or $values[2] -eq "O")
+			{
+			  $location=$values[1];
+			}else{
+			$location=$values[2];
+			}
+			
+			}elseif($values.count -eq 2){
+			  $location=$values[1];
+			}
+			
+			if($location -ge 6000 -and $location -lt 7000)
          {
           $capavail=get-random $rand1;
-         }elseif($LocKey -ge 5000 -and $LocKey -lt 6000)
+         }elseif($location -ge 5000 -and $location -lt 6000)
          {
              $capavail=get-random $rand2;
           }else
 		  {
 		  $capavail=get-random $rand3;
 		  }
-         $CapFile.writeline($WeekKey+","+$LocationHash.Get_Item($LocKey)+",0,"+$ResInd+","+$capavail+",,");
-		}
-	
-        $StartDate=$StartDate.AddDays(7);
-	}
-	
+		  $WeekKey=get-date $StartDate -Format "yyyy-MM-dd";
+			  
+			   $CapFile.writeline($WeekKey+","+$LocationHash.Get_Item([Int]$location)+",0,"+$ResInd+","+$capavail+",,");
+               #$MPFile.writeline($acty[$resind]);
+			   
+}	  
+$StartDate=$StartDate.AddDays(7);
+}		
 $CapFile.close();
 $Proc=Get-Job;
 Stop-Job $Proc.InstanceId;
@@ -1134,6 +1203,7 @@ $generateDemand =
 	{
 	  for($LocInd=0;$LocInd -lt 5;$LocInd++) #replace 5 with $Stores
        {
+	  
           for($ItemInd=$StartItemIntl;$ItemInd -lt $EndItemDom;$ItemInd++)
           {
                
@@ -1893,7 +1963,7 @@ function generateItems
 	$ItemFile.writeline("Item.[ItemKey],Item.[Item],Item.[ItemSubGroupKey],Item.[Item Sub Group],Item.[ItemGroupKey],Item.[Item Group]");
 	for($ItemInd=0;$ItemInd -lt $ItemCount;$ItemInd++)
 	{
-	 $ItemFile.writeline($ItemInd.ToString()+","+$ItemInd+","+[math]::floor($ItemInd/5)+",ItemSubGroup-"+[math]::floor($ItemInd/5)+","+[math]::floor($ItemInd/10)+",ItemGroup-"+[math]::floor($ItemInd/10));
+	 $ItemFile.writeline($ItemInd.ToString()+","+$ItemInd+","+[math]::floor($ItemInd/5)+",ItemSubGroup-"+[math]::floor($ItemInd/5)+","+[math]::floor($ItemInd/10)+",ItemGroup-"+[math]::floor($ItemInd%3));
 	}
 	$ItemFile.close();
 }
